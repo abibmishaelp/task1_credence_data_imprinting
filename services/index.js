@@ -1,5 +1,6 @@
 let fs = require('fs');
 const { PDFDocument } = require('pdf-lib');
+const PDFKitDocument = require('pdfkit');
 
 exports.upload = async (req) => {
     try {
@@ -15,36 +16,25 @@ exports.upload = async (req) => {
             //adding 
             if (req.file) {
                 let filePath = req.file.path;
+                const newPdfDoc = await PDFDocument.create();
                 const existingPdfBytes = await fs.readFileSync(filePath);
 
                 const pdfDoc = await PDFDocument.load(existingPdfBytes);
+                console.log(pdfDoc.getPageCount());
+                //Copying Contents
+                const [firstDonorPage] = await newPdfDoc.copyPages(pdfDoc, [0]);
+                const [secondDonorPage] = await newPdfDoc.copyPages(pdfDoc, [2]);
+                newPdfDoc.addPage(firstDonorPage);
+                newPdfDoc.insertPage(0, secondDonorPage);
 
-                let options = {
-                    header: {
-                        x: 25,
-                        y: 45,
-                        width: 200,
-                        height: 100,
-                        textColor: rgb(1, 0, 0),
-                        backgroundColor: rgb(0, 1, 0),
-                        borderColor: rgb(0, 0, 1),
-                        borderWidth: 2,
-                        rotate: degrees(90)
-                    },
-                    footer: {
-                        x: 50,
-                        y: 75,
-                        width: 200,
-                        height: 100,
-                        textColor: rgb(1, 0, 0),
-                        backgroundColor: rgb(0, 1, 0),
-                        borderColor: rgb(0, 0, 1),
-                        borderWidth: 2,
-                        rotate: degrees(90)
-                    }
-                };
-                let addData = await this.add(pdfDoc, options);
-                console.log("afterAdding", addData);
+                const pdfBytes = await newPdfDoc.save()
+
+                console.log("Check The File",filePath);
+                // const writingPdfBytes = await fs.writeFileSync(filePath,pdfDoc);
+                const writingPdfBytes = await fs.writeFileSync("./uploads/newFile.pdf",pdfBytes);
+                // let options = {};
+                // let addData = await this.add(pdfDoc, options);
+                // console.log("afterAdding", addData);
             } else if (req.body) {
 
             }
