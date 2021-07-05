@@ -1,5 +1,6 @@
 let fs = require('fs');
-const { PDFDocument } = require('pdf-lib');
+const {  degrees, PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+// import { degrees, PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 const PDFKitDocument = require('pdfkit');
 
 exports.upload = async (req) => {
@@ -15,26 +16,17 @@ exports.upload = async (req) => {
 
             //adding 
             if (req.file) {
-                let filePath = req.file.path;
-                const newPdfDoc = await PDFDocument.create();
-                const existingPdfBytes = await fs.readFileSync(filePath);
-
-                const pdfDoc = await PDFDocument.load(existingPdfBytes);
-                console.log(pdfDoc.getPageCount());
-                //Copying Contents
-                const [firstDonorPage] = await newPdfDoc.copyPages(pdfDoc, [0]);
-                const [secondDonorPage] = await newPdfDoc.copyPages(pdfDoc, [2]);
-                newPdfDoc.addPage(firstDonorPage);
-                newPdfDoc.insertPage(0, secondDonorPage);
-
-                const pdfBytes = await newPdfDoc.save()
-
-                console.log("Check The File",filePath);
-                // const writingPdfBytes = await fs.writeFileSync(filePath,pdfDoc);
-                const writingPdfBytes = await fs.writeFileSync("./uploads/newFile.pdf",pdfBytes);
-                // let options = {};
-                // let addData = await this.add(pdfDoc, options);
-                // console.log("afterAdding", addData);
+                
+                // const writingPdfBytes = await fs.writeFileSync("./uploads/newFile1.pdf",pdfBytes);
+                let options = {
+                    // "header":"Hi I am Header",
+                    // "footer":"Hi I am Footer",
+                    "waterMark":"Hi I am Water Marks"
+                };
+                console.log("opjaf",options.waterMark);
+                let addData = await this.add(req,options);
+                console.log("afterAdding", addData);
+                return addData;
             } else if (req.body) {
 
             }
@@ -58,8 +50,7 @@ exports.validateFile = async (req) => {
 }
 
 //adding in the file
-exports.add = async (pdfDoc, options) => {
-    const page = pdfDoc.addPage()
+exports.add = async (req, options) => {
     if (options.header) {
         const form = pdfDoc.getForm()
         const textField = form.createTextField('Header');
@@ -71,6 +62,30 @@ exports.add = async (pdfDoc, options) => {
         const textField = form.createTextField('best.gundam')
         textField.setText('Exia')
         textField.addToPage(page, options.footer);
+    }
+    if (options.waterMark) {
+        let filePath = req.file.path;
+        const existingPdfBytes = await fs.readFileSync(filePath);
+        const pdfDoc = await PDFDocument.load(existingPdfBytes);
+        let pageCount  = pdfDoc.getPageCount();
+        const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
+        const pages = pdfDoc.getPages()
+        for (let i=1;i<pageCount;i++){
+            const { width, height } = pages[i].getSize()
+            pages[i].drawText(options.waterMark, {
+                x: width / 2 - 150,
+                y: height / 2 - 150 ,
+                size: 50,
+                font: helveticaFont,
+                color: rgb(0.95, 0.1, 0.1),
+                rotate: degrees(45),
+                })
+        }          
+        const pdfBytes = await pdfDoc.save()
+        console.log("Check The File",filePath);
+        const writingPdfBytes = await fs.writeFileSync(filePath,pdfBytes);
+        // fs.unlinkSync(req.file.path);
+        return filePath;
     }
 
     console.log("pages", pdfDoc.getPages());

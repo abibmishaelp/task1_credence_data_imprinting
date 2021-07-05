@@ -26,7 +26,8 @@ router.post('/upload', upload.single('filename'), async (req, res) => {
   let re;
   try {
     re = await indexServices.upload(req);
-    res.status(200).send(re);
+    res.status(200).download(re);
+    // res.download(re);
   } catch (e) {
     console.log("Error In uploading", e);
     res.status(400).send(e);
