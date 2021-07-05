@@ -3,6 +3,7 @@ var router = express.Router();
 var indexServices = require("../services/index")
 var multer = require('multer');
 var path = require('path');
+var zip = require("express-zip");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -26,8 +27,15 @@ router.post('/upload', upload.single('filename'), async (req, res) => {
   let re;
   try {
     re = await indexServices.upload(req);
-    res.status(200).download(re);
-    // res.download(re);
+    console.log("re",JSON.stringify(re));
+    // let result = JSON.stringify(req.newFile);
+    console.log("re",req.file.path);
+    // res.status(200).download(req.file.path,"./uploads/output.pdf");
+    res.status(200).zip([
+      {path: re, name:"ResultPdf.pdf"},
+      {path: req.file.path, name:"InputPdf.pdf"}
+    ])
+    // res.status(200).zip(e);
   } catch (e) {
     console.log("Error In uploading", e);
     res.status(400).send(e);

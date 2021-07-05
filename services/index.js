@@ -32,7 +32,7 @@ exports.upload = async (req) => {
                     addWaterMarkData = await this.addWaterMark(req,options.waterMark);
                     console.log("afterAddingWaterMark", addWaterMarkData);
                 }           
-                return req.file.path;
+                return req.newFile;
             } else if (req.body) {
             }
         }
@@ -71,10 +71,11 @@ exports.addHeader = async (req, header) => {
                     })
                 }         
             const pdfBytes = await pdfDoc.save()
-            console.log("Check The File",filePath);
-            const writingPdfBytes = await fs.writeFileSync(filePath,pdfBytes);
+            req.newFile = "uploads/output.pdf";
+            console.log("Check The File",req.newFile);
+            const writingPdfBytes = await fs.writeFileSync("uploads/output.pdf",pdfBytes);
             // fs.unlinkSync(req.file.path);
-            return filePath;
+            return req.newFile;
     } catch (err){
         return err;
     } finally {
@@ -85,7 +86,12 @@ exports.addHeader = async (req, header) => {
 //adding footer in the file
 exports.addFooter = async (req, footer) => {
     try{
-        let filePath = req.file.path;
+        let filePath;
+        if (req.newFile){
+            filePath = req.newFile;
+        }else{
+            filePath = req.file.path;
+        }
         const existingPdfBytes = await fs.readFileSync(filePath);
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
         let pageCount  = pdfDoc.getPageCount();
@@ -100,10 +106,11 @@ exports.addFooter = async (req, footer) => {
                     })
                 }         
             const pdfBytes = await pdfDoc.save()
-            console.log("Check The File",filePath);
-            const writingPdfBytes = await fs.writeFileSync(filePath,pdfBytes);
+            req.newFile = "uploads/output.pdf";
+            console.log("Check The File",req.newFile);
+            const writingPdfBytes = await fs.writeFileSync("uploads/output.pdf",pdfBytes);
             // fs.unlinkSync(req.file.path);
-            return filePath;
+            return req.newFile;
     } catch (err){
         return err;
     } finally {
@@ -114,7 +121,12 @@ exports.addFooter = async (req, footer) => {
 //adding waterMark in the file
 exports.addWaterMark = async (req, waterMark) => {
     try{
-        let filePath = req.file.path;
+        let filePath;
+        if (req.newFile){
+            filePath = req.newFile;
+        }else{
+            filePath = req.file.path;
+        }
         const existingPdfBytes = await fs.readFileSync(filePath);
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
         let pageCount  = pdfDoc.getPageCount();
@@ -132,10 +144,11 @@ exports.addWaterMark = async (req, waterMark) => {
                 })
         }            
         const pdfBytes = await pdfDoc.save()
-        console.log("Check The File",filePath);
-        const writingPdfBytes = await fs.writeFileSync(filePath,pdfBytes);
+        req.newFile = "uploads/output.pdf";
+        console.log("Check The File",req.newFile);
+        const writingPdfBytes = await fs.writeFileSync("uploads/output.pdf",pdfBytes);
         // fs.unlinkSync(req.file.path);
-        return filePath;
+        return req.newFile;
     } catch (err){
         return err;
     } finally {
