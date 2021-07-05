@@ -1,7 +1,5 @@
 let fs = require('fs');
 const {  degrees, PDFDocument, rgb, StandardFonts } = require('pdf-lib');
-// import { degrees, PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-const PDFKitDocument = require('pdfkit');
 
 exports.upload = async (req) => {
     try {
@@ -14,24 +12,30 @@ exports.upload = async (req) => {
             throw "File Not Valid";
         } else {
 
-            //adding 
-            if (req.file) {
-                
-                // const writingPdfBytes = await fs.writeFileSync("./uploads/newFile1.pdf",pdfBytes);
+            //adding contents to the given file
+            if (req.file) {    
                 let options = {
-                    // "header":"Hi I am Header",
-                    // "footer":"Hi I am Footer",
+                    "header":"Hi I am Header",
+                    "footer":"Hi I am Footer",
                     "waterMark":"Hi I am Water Marks"
                 };
-                console.log("opjaf",options.waterMark);
-                let addData = await this.add(req,options);
-                console.log("afterAdding", addData);
-                return addData;
+                let addHeaderData,addFooterData,addWaterMarkData;
+                if (options.header){
+                    addHeaderData = await this.addHeader(req,options.header);
+                    console.log("afterAddingHeader", addHeaderData);
+                }
+                if (options.footer){
+                    addFooterData = await this.addFooter(req,options.footer);
+                    console.log("afterAddingFooter", addFooterData);
+                }
+                if (options.waterMark){
+                    addWaterMarkData = await this.addWaterMark(req,options.waterMark);
+                    console.log("afterAddingWaterMark", addWaterMarkData);
+                }           
+                return req.file.path;
             } else if (req.body) {
-
             }
         }
-
     } catch (e) {
         console.log("Error in Service Uploading", e);
         throw e;
@@ -49,45 +53,92 @@ exports.validateFile = async (req) => {
     }
 }
 
-//adding in the file
-exports.add = async (req, options) => {
-    if (options.header) {
-        const form = pdfDoc.getForm()
-        const textField = form.createTextField('Header');
-        textField.setText('Exia')
-        textField.addToPage(page, options.header);
-    }
-    if (options.footer) {
-        const form = pdfDoc.getForm()
-        const textField = form.createTextField('best.gundam')
-        textField.setText('Exia')
-        textField.addToPage(page, options.footer);
-    }
-    if (options.waterMark) {
+//adding header in the file
+exports.addHeader = async (req, header) => {
+    try{
+        let filePath = req.file.path;
+        const existingPdfBytes = await fs.readFileSync(filePath);
+        const pdfDoc = await PDFDocument.load(existingPdfBytes);
+        let pageCount  = pdfDoc.getPageCount();
+        let pages = pdfDoc.getPages();
+            for (let i=0;i<pageCount;i++){
+                    const { width, height } = pages[i].getSize();
+                    pages[i].drawText(header, {                         
+                        x: width / 2 - 80,
+                        y: height - 20,
+                        size: 20,
+                        color: rgb(0.50, 0.15, 0.05)
+                    })
+                }         
+            const pdfBytes = await pdfDoc.save()
+            console.log("Check The File",filePath);
+            const writingPdfBytes = await fs.writeFileSync(filePath,pdfBytes);
+            // fs.unlinkSync(req.file.path);
+            return filePath;
+    } catch (err){
+        return err;
+    } finally {
+        
+    }    
+}
+
+//adding footer in the file
+exports.addFooter = async (req, footer) => {
+    try{
+        let filePath = req.file.path;
+        const existingPdfBytes = await fs.readFileSync(filePath);
+        const pdfDoc = await PDFDocument.load(existingPdfBytes);
+        let pageCount  = pdfDoc.getPageCount();
+        let pages = pdfDoc.getPages();
+            for (let i=0;i<pageCount;i++){
+                    const { width, height } = pages[i].getSize();
+                    pages[i].drawText(footer, { 
+                        x: width / 2 - 80,
+                        y: 10,
+                        size: 20,
+                        color: rgb(0.5, 0.15, 0.05)
+                    })
+                }         
+            const pdfBytes = await pdfDoc.save()
+            console.log("Check The File",filePath);
+            const writingPdfBytes = await fs.writeFileSync(filePath,pdfBytes);
+            // fs.unlinkSync(req.file.path);
+            return filePath;
+    } catch (err){
+        return err;
+    } finally {
+        
+    }    
+}
+
+//adding waterMark in the file
+exports.addWaterMark = async (req, waterMark) => {
+    try{
         let filePath = req.file.path;
         const existingPdfBytes = await fs.readFileSync(filePath);
         const pdfDoc = await PDFDocument.load(existingPdfBytes);
         let pageCount  = pdfDoc.getPageCount();
         const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
-        const pages = pdfDoc.getPages()
+        let pages = pdfDoc.getPages();
         for (let i=1;i<pageCount;i++){
             const { width, height } = pages[i].getSize()
-            pages[i].drawText(options.waterMark, {
+            pages[i].drawText(waterMark, {
                 x: width / 2 - 150,
                 y: height / 2 - 150 ,
                 size: 50,
                 font: helveticaFont,
-                color: rgb(0.95, 0.1, 0.1),
+                color: rgb(0.50, 0.025, 0.005),
                 rotate: degrees(45),
                 })
-        }          
+        }            
         const pdfBytes = await pdfDoc.save()
         console.log("Check The File",filePath);
         const writingPdfBytes = await fs.writeFileSync(filePath,pdfBytes);
         // fs.unlinkSync(req.file.path);
         return filePath;
-    }
-
-    console.log("pages", pdfDoc.getPages());
-    console.log("adding", pdfDoc.save());
+    } catch (err){
+        return err;
+    } finally {
+        
+    }    
 }
