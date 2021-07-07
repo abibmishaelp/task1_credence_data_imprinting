@@ -1,4 +1,4 @@
-# Task Add Header,Footer,WaterMark to a given pdf file.
+# Task Add Header,Footer and WaterMark to a given pdf file.
 
 How to run the Application:- (Irrespective of Operatins System)
 1. Download the application, and open the project in node.
